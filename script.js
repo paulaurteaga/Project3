@@ -23,17 +23,31 @@ var stationID
 var income
 var county
 var state
+
+function Winddefault(energy_type) {
+  if(energy_type===undefined){
+    energy_type="Wind"
+  };
+};
+
+
 function init() {
   var select = d3.select("#selectNumber");
   d3.json(url, (data) => {
     gData = data
+    console.log(gData)
+
+
     var sampleNames = data.features
-    sampleNames.forEach((sample) => {
-      select
-        .append("option")
-        .text(sample.properties.General_Fuel)
-        .property("value", sample.properties.General_Fuel);
-    });
+    
+    //Code to append all energy types, removed since adding not unique values - code was hardcoded into html
+    // sampleNames.forEach((sample) => {
+    //   select
+    //     .append("option")
+    //     .text(sample.properties.General_Fuel)
+    //     .property("value", sample.properties.General_Fuel);
+    // });
+
     L.geoJson(data, {
       onEachFeature: function (feature, layer) {
         var newMarker = L.marker([feature.properties.Latitude, feature.properties.Longitude]);
@@ -53,11 +67,12 @@ console.log(gData)
 function newId(sample) {
   var sampleRows = gData.features
   var filterData = sampleRows.filter(d => d.properties.General_Fuel == sample)
-  onlineyear = filterData.map(d => d.properties.Online_Year == null ? 1990 : d.properties.Online_Year)
+  
+  onlineyear = filterData.map(d => d.properties.Online_Year == null ? undefined : d.properties.Online_Year)
   energy_type = filterData.map(d => d.properties.General_Fuel)
   MWproduction = filterData.map(d => d.properties.MW)
   stationID = filterData.map(d => d.properties.Plant_ID)
-  income = filterData.map(d => d.properties.Net_MWh == null ? 50 : d.properties.Net_MWh)
+  income = filterData.map(d => d.properties.Net_MWh == null ? undefined : d.properties.Net_MWh)
   county = filterData.map(d => d.properties.County)
   state = filterData.map(d => d.properties.state)
 
@@ -81,7 +96,7 @@ function createBarChart(energy_type, MWproduction) {
 
   var data = [trace];
   var layout = {
-    title: "Sources of Energy in California",
+    title: "Total Capacity",
     xaxis: { title: "Type of Energy" },
     yaxis: { title: "Total Capacity in MWH" }
   };
@@ -90,24 +105,14 @@ function createBarChart(energy_type, MWproduction) {
 
 //Added by Diana 4/16/2020 @8:13pm
 function createBubblechart(onlineyear, MWproduction, energy_type, filterData) {
-  // function createBubblechart(onlineyear, MWproduction, energy_type) {
-  // console.log(onlineyear)
-  // var stationIDcount = d3.nest()
-  //   .key(function (d) { return d.Plant_ID; })
-  //   .rollup(function (v) { return v.length; })
-  //   .entries(features.properties);
-  // // console.log(JSON.stringify(stationIDcount));
-  // var MWproductionSum = d3.nest()
-  //   .key(function (d) { return d.Plant_ID; })
-  //   .rollup(function (v) { return v.sum; })
-  //   .entries(features.properties);
+
   var trace2 = {
     x: onlineyear,
     y: MWproduction,
     mode: "markers",
     marker: {
-      size: 20,
-      color: energy_type
+      size: 15
+      // color: energy_type
     }
   };
   var trace2data = [trace2]
@@ -116,12 +121,13 @@ function createBubblechart(onlineyear, MWproduction, energy_type, filterData) {
     margin: { t: 0 },
     hovermode: "closest",
     xaxis: { title: "Online Year" },
+    yaxis: { title: "Mega Watt Production" },
     margin: { t: 30 }
   };
   Plotly.newPlot("bubble", trace2data, layout2);
 };
 // }
-//Diana addtion - Code finish here
+//Diana addition - Code finish here
 
 function createTimeline(energy_type, income, MWproduction) {
 
@@ -135,7 +141,27 @@ function createPieChart() {
 function initBarchart() {
 
 }
-function initBubbleChart(onlineyear, MWproduction, energy_type, filterData) {
+function initBubbleChart(onlineyear, MWproduction, energy_type, WindData) {
+
+  var trace2 = {
+    x: onlineyear,
+    y: MWproduction,
+    mode: "markers",
+    marker: {
+      size: 15
+      // color: energy_type
+    }
+  };
+  var trace2data = [trace2]
+  var layout2 = {
+    title: "Historical Energy Production",
+    margin: { t: 0 },
+    hovermode: "closest",
+    xaxis: { title: "Online Year" },
+    yaxis: { title: "Mega Watt Production" },
+    margin: { t: 30 }
+  };
+  Plotly.newPlot("bubble", trace2data, layout2);
 
 }
 function initTimeline() {
@@ -147,3 +173,4 @@ function initPieChart() {
 
 
 init()
+initBubbleChart(onlineyear, MWproduction, energy_type, WindData)
