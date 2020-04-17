@@ -30,18 +30,21 @@ function init() {
   var select = d3.select("#selectNumber");
   d3.json(url, (data) => {
     gData = data
-    console.log(gData)
-
-
+    initBarchart(gData)
+    initBubbleChart(gData)
+    initPieChart(gData)
+    initTimeline(gData)
     var sampleNames = data.features
-    
-    //Code to append all energy types, removed since adding not unique values - code was hardcoded into html
-    // sampleNames.forEach((sample) => {
-    //   select
-    //     .append("option")
-    //     .text(sample.properties.General_Fuel)
-    //     .property("value", sample.properties.General_Fuel);
-    // });
+    var uniqueList= new Set();  
+    for (index = 0; index < sampleNames.length; index++) { 
+        uniqueList.add(sampleNames[index].properties.General_Fuel)
+    } 
+     uniqueList.forEach((sample) => {
+       select
+         .append("option")
+        .text(sample)
+         .property("value", sample);
+     });
 
     L.geoJson(data, {
       onEachFeature: function (feature, layer) {
@@ -50,15 +53,13 @@ function init() {
         newMarker.bindPopup("Plant Label: " + feature.properties.Plant_Label + "<br>");
       }
     })
-
+    
   }
   )
-  initBarchart()
-  initBubbleChart()
-  initTimeline()
-  initPieChart()
+    
+   
 }
-console.log(gData)
+
 function newId(sample) {
   var sampleRows = gData.features
   var filterData = sampleRows.filter(d => d.properties.General_Fuel == sample)
@@ -72,7 +73,7 @@ function newId(sample) {
   state = filterData.map(d => d.properties.state)
 
 
-  //createBarChart( MWproduction, state, county);
+  
   createBarChart(energy_type, MWproduction)
   createBubblechart(onlineyear, MWproduction, energy_type, filterData)
   createTimeline(energy_type, income)
@@ -80,7 +81,16 @@ function newId(sample) {
 
 }
 
-
+function createMap(filterData){
+      
+    
+      for (i=0;i<filterData.length;i++){
+      var newMarker = L.marker(filterData[i].properties.Latitude, filterData[i].properties.Longitude);
+      newMarker.addTo(myMap);
+      newMarker.bindPopup("Plant Label: " + filterData[i].properties.Plant_Label + "<br>");
+    }
+  
+}
 
 function createBarChart(energy_type, MWproduction) {
   var trace = {
@@ -133,18 +143,65 @@ function createPieChart() {
 }
 
 
-function initBarchart() {
+function initBarchart(gData) {
+  
+  var infoData=gData.features
+  var energy=[]
+  var MW=[]
+  for (i=0;i<infoData.length;i++){
+    energy.push(infoData[i].properties.General_Fuel)
+    MW.push(infoData[i].properties.MW)
+  }
+  var trace = {
+    x: energy,
+    y: MW,
+    type: "bar",
+    transforms: [{
+    type: 'groupby',
+    groups: energy,
+    styles: [
+      {target: 'Wind', value: {marker: {color: 'blue'}}},
+      {target: 'Gas', value: {marker: {color: 'red'}}},
+      {target: 'Hydro', value: {marker: {color: 'black'}}},
+      {target: 'Biomass', value: {marker: {color: 'green'}}},
+      {target: 'Solar', value: {marker: {color: 'pink'}}},
+      {target: 'Landfill Gas', value: {marker: {color: 'purple'}}},
+      {target: 'Nuclear', value: {marker: {color: 'yellow'}}},
+      {target: 'MSW', value: {marker: {color: 'brown'}}},
+      {target: 'Coal', value: {marker: {color: 'limegreen'}}},
+      {target: 'Digester Gas', value: {marker: {color: 'lightcoral'}}},
+      {target: 'Battery', value: {marker: {color: 'orange'}}},
+      {target: 'Solar Thermal', value: {marker: {color: 'salmon'}}},
+      {target: 'Geothermal', value: {marker: {color: 'darkblue'}}}
+    ]
+  }]}
 
+  var data = [trace];
+  var layout = {
+    title: "Total Capacity",
+    xaxis: { title: "Type of Energy" },
+    yaxis: { title: "Total Capacity in MWH" }
+  };
+  Plotly.newPlot("bar", data, layout);
 }
-function initBubbleChart(onlineyear, MWproduction, energy_type, WindData) {
 
+function initBubbleChart(gData) {
+  var infoData=gData.features
+  var years=[]
+  var energy=[]
+  var MW=[]
+  for (i=0;i<infoData.length;i++){
+    years.push(infoData[i].properties.Online_Year)
+    MW.push(infoData[i].properties.MW)
+    energy.push(infoData[i].properties.General_Fuel)
+  }
   var trace2 = {
-    x: onlineyear,
-    y: MWproduction,
+    x: years,
+    y: MW,
     mode: "markers",
     marker: {
-      size: 15
-      // color: energy_type
+      size: 15,
+     color: energy
     }
   };
   var trace2data = [trace2]
@@ -168,4 +225,4 @@ function initPieChart() {
 
 
 init()
-initBubbleChart(onlineyear, MWproduction, energy_type, WindData)
+
