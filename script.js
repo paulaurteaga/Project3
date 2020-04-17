@@ -24,11 +24,6 @@ var income
 var county
 var state
 
-function Winddefault(energy_type) {
-  if(energy_type===undefined){
-    energy_type="Wind"
-  };
-};
 
 
 function init() {
